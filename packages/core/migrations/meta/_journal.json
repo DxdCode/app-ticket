@@ -8,6 +8,13 @@
       "when": 1765829773906,
       "tag": "0000_empty_gravity",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1766341531688,
+      "tag": "0001_fixed_nova",
+      "breakpoints": true
     }
   ]
 }

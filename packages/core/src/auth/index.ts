@@ -41,6 +41,15 @@ export namespace User {
                 example: Examples.User.username,
             }),
             role: RoleEnum,
+            created: z.string().openapi({
+                description: "Fecha de creación del usuario",
+                example: new Date().toISOString(),
+                format: "date-time",
+            }),
+            isActive: z.boolean().openapi({
+                description: "Si el usuario está activo",
+                example: true,
+            }),
         })
         .openapi({
             ref: "User",
@@ -50,6 +59,8 @@ export namespace User {
                 email: Examples.User.email,
                 username: Examples.User.username,
                 role: "user",
+                created: new Date().toISOString(),
+                isActive: true,
             },
         });
 
@@ -64,6 +75,8 @@ export namespace User {
             email: input.email,
             username: input.username,
             role: input.role || "user",
+            created: input.timeCreated.toISOString(),
+            isActive: input.isActive
         };
     }
 

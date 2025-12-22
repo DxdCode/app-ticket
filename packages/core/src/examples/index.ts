@@ -17,6 +17,8 @@ export namespace Examples {
         username: "david",
         password: "12345678",
         role: UserRole.User,
+        created: new Date().toISOString(),
+        isActive: true,
     };
 
     export const Register = {
@@ -35,7 +37,7 @@ export namespace Examples {
             id: Id("user"),
             email: "david@gmail.com",
             username: "david",
-            role: "user", 
+            role: "user",
         },
         token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example",
     } as const;

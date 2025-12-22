@@ -10,4 +10,5 @@ export const userTable = pgTable('users',{
     password: varchar("password", { length: 100 }).notNull(),
     role: userRoleEnum("role").notNull().default("user"),
     ...Drizzle.timestamps,
+    ...Drizzle.isActive,
 })
