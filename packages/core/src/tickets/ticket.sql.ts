@@ -17,7 +17,6 @@ export const ticketTable = pgTable('tickets', {
     category: varchar("category", { length: 50 }).notNull(),
     priority: varchar("priority", { length: 50 }).notNull(),
     status: ticketStatusEnum("status").notNull().default("open"),
-    solution: text("solution"),
     ...Drizzle.isActive,
     ...Drizzle.timestamps,
 });

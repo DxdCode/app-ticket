@@ -13,12 +13,10 @@ import {
 
 export const userTicketRoute = new Hono()
 
-    .use('*', authRequired)
-    .use('*', roleRequired('user'))
-
-
     .post(
-        '/',
+        '/create',
+        authRequired,
+        roleRequired('user'),
         describeRoute({
             tags: ['User Tickets'],
             summary: 'Crear un nuevo ticket',
@@ -70,7 +68,9 @@ export const userTicketRoute = new Hono()
     )
 
     .get(
-        '/',
+        '/list',
+        authRequired,
+        roleRequired('user'),
         describeRoute({
             tags: ['User Tickets'],
             summary: 'Listar tickets del usuario',
@@ -86,7 +86,7 @@ export const userTicketRoute = new Hono()
                                 })
                             ),
                             example: {
-                                data: [Examples.Ticket],
+                                data: [Examples.TicketInfo],
                             },
                         },
                     },
@@ -103,11 +103,13 @@ export const userTicketRoute = new Hono()
     )
 
     .get(
-        '/:id',
+        '/detail/:id',
+        authRequired,
+        roleRequired('user'),
         describeRoute({
             tags: ['User Tickets'],
             summary: 'Obtener detalle del ticket por ID',
-            description: 'Devuelve el ticket con mensajes y logs de IA',
+            description: 'Devuelve el detalle de un ticket específico del usuario autenticado',
             responses: {
                 200: {
                     description: 'Detalle del ticket',
@@ -115,7 +117,7 @@ export const userTicketRoute = new Hono()
                         'application/json': {
                             schema: resolver(
                                 z.object({
-                                    data: Ticket.InfoSchema,
+                                    data: Ticket.DetailSchema,
                                 })
                             ),
                             example: {
@@ -152,7 +154,9 @@ export const userTicketRoute = new Hono()
 
 
     .delete(
-        '/:id',
+        '/delete/:id',
+        authRequired,
+        roleRequired('user'),
         describeRoute({
             tags: ['User Tickets'],
             summary: 'Eliminar un ticket por ID',
@@ -193,6 +197,59 @@ export const userTicketRoute = new Hono()
             const user = getAuthPayload(c)!;
 
             const result = await Ticket.deactivate({
+                id,
+                userId: user.userId,
+            });
+
+            return c.json({ data: result }, 200);
+        }
+    )
+
+    .patch(
+        '/close/:id',
+        authRequired,
+        roleRequired('user'),
+        describeRoute({
+            tags: ['User Tickets'],
+            summary: 'Cerrar un ticket por ID',
+            description: 'El usuario puede cerrar su ticket cuando se resuelve su problema',
+            responses: {
+                200: {
+                    description: 'Ticket cerrado exitosamente',
+                    content: {
+                        'application/json': {
+                            schema: resolver(
+                                z.object({
+                                    data: z.object({
+                                        success: z.boolean(),
+                                    }),
+                                })
+                            ),
+                            example: {
+                                data: { success: true },
+                            },
+                        },
+                    },
+                },
+                400: ErrorResponses[400],
+                404: ErrorResponses[404],
+                500: ErrorResponses[500],
+            },
+        }),
+        validator(
+            'param',
+            z.object({
+                id: z.string().openapi({
+                    param: { name: 'id', in: 'path' },
+                    example: Examples.Ticket.id,
+                }),
+            })
+        ),
+        async (c) => {
+            const { id } = c.req.valid('param');
+            const user = getAuthPayload(c)!;
+
+            const result = await Ticket.closeByUser({
                 id,
                 userId: user.userId,
             });
