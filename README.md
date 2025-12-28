@@ -1,20 +1,19 @@
 # App Ticket
 
-Sistema de tickets con backend en Bun y frontend mobile en Expo/React Native.
+Sistema de tickets con backend en Hono y frontend mobile en Expo/React Native.
 
 ## 🚀 Tecnologías principales
-- Bun (backend)
+- Hono (backend)
 - React Native (frontend)
-- TypeScript
 
 
 ## 📦 Estructura del proyecto (Monorepo)
 
 ```
 ├── apps/
-│   ├── api/           # Backend Bun
-│   └── app-tickets/   # App móvil Expo
-├── packages/core/     # Lógica compartida, Drizzle, migraciones
+│   ├── api/           # Backend Hono
+│   └── app-tickets/   # React Native Expo 
+├── packages/core/     # Lógica, Drizzle BD
 ```
 
 ## 🛠️ Instalación y setup
