@@ -42,7 +42,7 @@ export namespace Examples {
         token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example",
     } as const;
 
-    export const Ticket = {
+    export const TicketInfo = {
         id: Id("ticket"),
         userId: Id("user"),
         title: "Problema con facturación",
@@ -50,7 +50,35 @@ export namespace Examples {
         category: "pago",
         priority: "alta",
         status: "open",
-        solution: "Se ha verificado el pago y actualizado el estado de la cuenta",
+    } as const;
+
+    export const Ticket = {
+        ...TicketInfo,
+        isActive: true,
+        timeCreated: "2025-12-19T04:26:44.074617Z",
+        timeUpdated: "2025-12-19T04:26:44.075Z",
+    } as const;
+
+    export const TicketForAgent = {
+        id: Id("ticket"),
+        userId: Id("user"),
+        title: "La pc ya no funciona",
+        description: "Me sale que esta actualizando el windows",
+        category: "tecnico",
+        priority: "alta",
+        status: "resolved",
+        userName: "stalin",
+        userEmail: "stalin@gmail.com",
+    } as const;
+
+    export const TicketCreateOutput = {
+        id: Id("ticket"),
+        category: "tecnico",
+        priority: "alta",
+    } as const;
+
+    export const TicketDeleteSuccess = {
+        success: true,
     } as const;
 
     export const Message = {
@@ -58,11 +86,16 @@ export namespace Examples {
         ticketId: Id("ticket"),
         senderId: Id("user"),
         message: "Hola, tengo un problema con mi factura del mes pasado.",
+        role: "user" as const,
+        timeCreated: new Date().toISOString(),
     };
 
     export const Response = {
-        status: "resolved",
-        suggestion: "Gracias por contactarnos. Hemos revisado su cuenta y el pago se ha procesado correctamente. Por favor, verifique nuevamente su saldo.",
+        suggestion: "Gracias por contactarnos. Ya se revisará el estado de la transacción realizada.",
+    } as const;
+
+    export const AgentUpdateResponse = {
+        message: "Solución enviada correctamente. El ticket ha sido marcado como resuelto.",
     } as const;
 
     export const AILog = {

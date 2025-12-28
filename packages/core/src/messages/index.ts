@@ -33,6 +33,15 @@ export namespace Message {
                 description: "Contenido del mensaje",
                 example: Examples.Message.message,
             }),
+            role: z.enum(["user", "agent", "ia"]).openapi({
+                description: "Rol del remitente del mensaje",
+                example: "user",
+            }),
+            timeCreated: z.string().openapi({
+                description: "Fecha de creación del mensaje",
+                example: new Date().toISOString(),
+                format: "date-time",
+            }),
         })
         .openapi({
             ref: "Message",
@@ -42,7 +51,7 @@ export namespace Message {
 
     export type Info = z.infer<typeof InfoSchema>;
 
-    // DTO para crear mensaje (solo el contenido del mensaje)
+    // DTO para crear mensaje 
     export const CreateInputSchema = z
         .object({
             message: z.string().min(1).openapi({
@@ -57,7 +66,6 @@ export namespace Message {
 
     export type CreateInput = z.infer<typeof CreateInputSchema>;
 
-    // Schema interno para lógica (incluye ticketId y senderId)
     export const CreateSchema = InfoSchema.pick({
         ticketId: true,
         senderId: true,
@@ -91,6 +99,8 @@ export namespace Message {
             ticketId: input.ticketId,
             senderId: input.senderId,
             message: input.message,
+            role: input.role,
+            timeCreated: input.timeCreated.toISOString(),
         };
     }
 
@@ -139,6 +149,36 @@ export namespace Message {
                         eq(messageTable.isActive, true)
                     )
                 );
+
+            return select.map(serialize);
+        }
+    );
+
+    /**
+     * Lista mensajes para agentes (incluye tickets desactivados)
+     */
+    export const listForAgent = fn(
+        z.object({
+            ticketId: z.string(),
+        }),
+        async ({ ticketId }) => {
+            const [ticket] = await Drizzle.db
+                .select()
+                .from(ticketTable)
+                .where(eq(ticketTable.id, ticketId))
+                .limit(1);
+
+            if (!ticket) {
+                throw AppError.notFound(
+                    "Ticket no encontrado",
+                    "resource_not_found"
+                );
+            }
+
+            const select = await Drizzle.db
+                .select()
+                .from(messageTable)
+                .where(eq(messageTable.ticketId, ticketId));
 
             return select.map(serialize);
         }
@@ -215,6 +255,26 @@ export namespace Message {
                 mensajeUsuario: data.message,
             });
 
+            // Guardar mensaje del usuario
+            await Drizzle.db.insert(messageTable).values({
+                id,
+                ticketId: data.ticketId,
+                senderId: data.senderId,
+                role: "user",
+                message: data.message,
+            });
+
+            // Guardar respuesta de la IA
+            const aiMessageId = createID("message");
+            await Drizzle.db.insert(messageTable).values({
+                id: aiMessageId,
+                ticketId: data.ticketId,
+                senderId: "ai_assistant",
+                role: "ia",
+                message: suggestion,
+            });
+
+            // Guardar log de IA
             await Drizzle.db.insert(aiLogTable).values({
                 id: createID("aiLog"),
                 ticketId: data.ticketId,
@@ -226,11 +286,6 @@ export namespace Message {
                 output: suggestion,
             });
 
-            await Drizzle.db.insert(messageTable).values({
-                ...data,
-                id,
-            });
-
             return {
                 messageId: id,
                 suggestion,
@@ -239,36 +294,52 @@ export namespace Message {
     );
 
     /**
-     * Obtiene el detalle de un mensaje
+     * Crea un mensaje del agente 
      */
-    export const getDetail = fn(
-        z.object({
-            id: z.string().openapi({
-                description: Common.IdDescription,
-                example: Examples.Message.id,
-            }),
-        }),
-        async ({ id }) => {
-
-            const message = await Drizzle.db
+    export const createAgentMessage = fn(
+        CreateSchema,
+        async (data) => {
+            const [ticket] = await Drizzle.db
                 .select()
-                .from(messageTable)
-                .where(
-                    and(
-                        eq(messageTable.id, id),
-                        eq(messageTable.isActive, true)
-                    )
-                )
-                .then(r => r.map(serialize).at(0));
+                .from(ticketTable)
+                .where(eq(ticketTable.id, data.ticketId))
+                .limit(1);
 
-            if (!message) {
+            if (!ticket) {
                 throw AppError.notFound(
-                    "Mensaje no encontrado",
+                    "Ticket no encontrado",
                     "resource_not_found"
                 );
             }
 
-            return message;
+            if (ticket.status === "resolved") {
+                throw AppError.validation(
+                    "No se pueden agregar mensajes a un ticket resuelto",
+                    "ticket_resolved"
+                );
+            }
+
+            if (ticket.status !== "in_progress") {
+                await Drizzle.db
+                    .update(ticketTable)
+                    .set({
+                        status: "in_progress",
+                        timeUpdated: new Date(),
+                    })
+                    .where(eq(ticketTable.id, data.ticketId));
+            }
+
+            const id = createID("message");
+
+            await Drizzle.db.insert(messageTable).values({
+                id,
+                ticketId: data.ticketId,
+                senderId: data.senderId,
+                role: "agent",
+                message: data.message,
+            });
+
+            return { message: "Su respuesta ya ha sido enviada correctamente" };
         }
     );
 }

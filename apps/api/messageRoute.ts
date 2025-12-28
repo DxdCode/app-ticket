@@ -13,14 +13,12 @@ import {
 
 export const messageRoute = new Hono()
 
-    .use('*', authRequired)
-    .use('*', roleRequired('user'))
-
-
     .post(
-        '/:id/messages',
+        '/send/:id/messages',
+        authRequired,
+        roleRequired('user'),
         describeRoute({
-            tags: ['Messages'],
+            tags: ['User Messages'],
             summary: 'Enviar mensaje en ticket por ID',
             description: 'Crea un mensaje y genera respuesta sugerida de IA',
             requestBody: {
@@ -79,9 +77,11 @@ export const messageRoute = new Hono()
     )
 
     .get(
-        '/:id/messages',
+        '/list/:id/messages',
+        authRequired,
+        roleRequired('user'),
         describeRoute({
-            tags: ['Messages'],
+            tags: ['User Messages'],
             summary: 'Listar mensajes de un ticket por ID',
             description: 'Obtiene el historial de mensajes de un ticket específico',
             responses: {
@@ -125,26 +125,28 @@ export const messageRoute = new Hono()
             return c.json({ data: result }, 200);
         }
     )
-
-
+    
     .get(
-        '/messages/:messageId',
+        '/agent/list/:id/messages',
+        authRequired,
+        
+        roleRequired('agent'),
         describeRoute({
-            tags: ['Messages'],
-            summary: 'Obtener detalle de un mensaje por ID',
-            description: 'Recupera la información de un mensaje específico por su ID',
+            tags: ['Agent Messages'],
+            summary: 'Listar mensajes de un ticket por ID como agente',
+            description: 'Los agentes pueden ver mensajes de cualquier ticket, incluso si está eliminado',
             responses: {
                 200: {
-                    description: 'Detalle del mensaje',
+                    description: 'Lista de mensajes',
                     content: {
                         'application/json': {
                             schema: resolver(
                                 z.object({
-                                    data: Message.InfoSchema,
+                                    data: z.array(Message.InfoSchema),
                                 })
                             ),
                             example: {
-                                data: Examples.Message,
+                                data: [Examples.Message],
                             },
                         },
                     },
@@ -156,19 +158,78 @@ export const messageRoute = new Hono()
         validator(
             'param',
             z.object({
-                messageId: z.string().openapi({
-                    param: { name: 'messageId', in: 'path' },
-                    example: Examples.Message.id,
+                id: z.string().openapi({
+                    param: { name: 'id', in: 'path' },
+                    example: Examples.Ticket.id,
                 }),
             })
         ),
         async (c) => {
-            const { messageId } = c.req.valid('param');
+            const { id: ticketId } = c.req.valid('param');
+            const result = await Message.listForAgent({ ticketId });
+            return c.json({ data: result }, 200);
+        }
+    )
 
-            const result = await Message.getDetail({
-                id: messageId,
+    .post(
+        '/agent/send/:id/messages',
+        authRequired,
+        roleRequired('agent'),
+        describeRoute({
+            tags: ['Agent Messages'],
+            summary: 'Enviar mensaje como agente',
+            description: 'Los agentes pueden responder a tickets activos. No se puede responder a tickets resueltos.',
+            requestBody: {
+                content: {
+                    'application/json': {
+                        schema: resolver(Message.CreateInputSchema),
+                    },
+                } as any,
+            },
+            responses: {
+                201: {
+                    description: 'Mensaje enviado',
+                    content: {
+                        'application/json': {
+                            schema: resolver(
+                                z.object({
+                                    data: z.object({
+                                        message: z.string(),
+                                    }),
+                                })
+                            ),
+                            example: {
+                                data: { message: "Su respuesta ya ha sido enviada correctamente" },
+                            },
+                        },
+                    },
+                },
+                400: ErrorResponses[400],
+                404: ErrorResponses[404],
+                500: ErrorResponses[500],
+            },
+        }),
+        validator(
+            'param',
+            z.object({
+                id: z.string().openapi({
+                    param: { name: 'id', in: 'path' },
+                    example: Examples.Ticket.id,
+                }),
+            })
+        ),
+        validator('json', Message.CreateInputSchema),
+        async (c) => {
+            const { id: ticketId } = c.req.valid('param');
+            const body = c.req.valid('json');
+            const agent = getAuthPayload(c)!;
+
+            const result = await Message.createAgentMessage({
+                ticketId,
+                senderId: agent.userId,
+                message: body.message,
             });
 
-            return c.json({ data: result }, 200);
+            return c.json({ data: result }, 201);
         }
     );
