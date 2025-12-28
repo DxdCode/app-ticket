@@ -17,9 +17,9 @@ const route = app
     .use(cors())
     .route('/api/auth', userRoute)
     .route('/api/user/tickets', userTicketRoute)
-    .route('/api/user/tickets', messageRoute)
+    .route('/api/user/message', messageRoute)
     .route('/api/agent/tickets', agentTicketRoute)
-    .route('/api/agent/tickets', aiRoute)
+    .route('/api/agent/ai', aiRoute)
     .get(
         '/openapi',
         openAPISpecs(app, {

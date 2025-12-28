@@ -13,13 +13,10 @@ import {
 
 export const aiRoute = new Hono()
 
-
-    .use('*', authRequired)
-    .use('*', roleRequired('agent'))
-
-
     .get(
-        '/:id/ai',
+        '/logs/:id/ai',
+        authRequired,
+        roleRequired('agent'),
         describeRoute({
             tags: ['IA Logs'],
             summary: 'Listar logs de IA',
