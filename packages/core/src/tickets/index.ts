@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { and, eq } from "drizzle-orm";
+import { and, eq, desc } from "drizzle-orm";
 import { Common } from '../shared/common';
 import { Examples } from "../examples";
 import { Drizzle } from "../shared/drizzle";
@@ -177,7 +177,8 @@ export namespace Ticket {
             const tickets = await Drizzle.db
                 .select()
                 .from(ticketTable)
-                .where(and(eq(ticketTable.userId, userId), eq(ticketTable.isActive, true)));
+                .where(and(eq(ticketTable.userId, userId), eq(ticketTable.isActive, true)))
+                .orderBy(desc(ticketTable.timeCreated));
 
             if (tickets.length === 0) {
                 throw AppError.notFound("No se encontraron tickets", "no_tickets_found");
@@ -201,7 +202,12 @@ export namespace Ticket {
                 })
                 .from(ticketTable)
                 .leftJoin(userTable, eq(ticketTable.userId, userTable.id))
-                .where(includeInactive ? undefined : eq(ticketTable.isActive, true));
+                .where(includeInactive ? undefined : eq(ticketTable.isActive, true))
+                .orderBy(desc(ticketTable.timeCreated));
+
+            if (tickets.length === 0) {
+                throw AppError.notFound("No se encontraron tickets", "no_tickets_found");
+            }
 
             return tickets.map(({ ticket, user }) => ({
                 ...serialize(ticket),
@@ -324,9 +330,9 @@ export namespace Ticket {
 
             await Drizzle.db
                 .update(ticketTable)
-                .set({ 
-                    status: "resolved", 
-                    timeUpdated: new Date() 
+                .set({
+                    status: "resolved",
+                    timeUpdated: new Date()
                 })
                 .where(eq(ticketTable.id, id));
 

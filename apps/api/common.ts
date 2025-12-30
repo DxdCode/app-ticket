@@ -6,17 +6,6 @@ import { Token } from "@tickets/core";
 import { ErrorResponse, ErrorCodes } from "./error";
 
 /**
- * Standard success wrapper
- */
-export function Result<T extends z.ZodTypeAny>(schema: T) {
-  return resolver(
-    z.object({
-      data: schema,
-    }),
-  );
-}
-
-/**
  * Custom validator with standardized error format
  */
 export const validator = (

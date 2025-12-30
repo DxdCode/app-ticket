@@ -77,10 +77,6 @@ export namespace Examples {
         priority: "alta",
     } as const;
 
-    export const TicketDeleteSuccess = {
-        success: true,
-    } as const;
-
     export const Message = {
         id: Id("message"),
         ticketId: Id("ticket"),
@@ -90,12 +86,12 @@ export namespace Examples {
         timeCreated: new Date().toISOString(),
     };
 
-    export const Response = {
-        suggestion: "Gracias por contactarnos. Ya se revisará el estado de la transacción realizada.",
+    export const MessageForAgent = {
+        message: "Hola me puedes enviar el numero de la factura para revisar tu caso.",
     } as const;
 
-    export const AgentUpdateResponse = {
-        message: "Solución enviada correctamente. El ticket ha sido marcado como resuelto.",
+    export const Response = {
+        suggestion: "Gracias por contactarnos. Ya se revisará el estado de la transacción realizada.",
     } as const;
 
     export const AILog = {

@@ -13,8 +13,6 @@ import { IA } from "../ia/promps";
 
 export namespace Message {
 
-
-
     export const InfoSchema = z
         .object({
             id: z.string().openapi({
@@ -58,10 +56,6 @@ export namespace Message {
                 description: "Contenido del mensaje",
                 example: Examples.Message.message,
             }),
-        })
-        .openapi({
-            ref: "MessageCreateInput",
-            description: "Datos para enviar un mensaje",
         });
 
     export type CreateInput = z.infer<typeof CreateInputSchema>;
@@ -105,9 +99,8 @@ export namespace Message {
     }
 
 
-    /**
-     * Lista todos los mensajes de un ticket
-     */
+
+    // Lista todos los mensajes de un ticket
     export const list = fn(
         z.object({
             ticketId: z.string().openapi({
@@ -154,9 +147,8 @@ export namespace Message {
         }
     );
 
-    /**
-     * Lista mensajes para agentes (incluye tickets desactivados)
-     */
+
+     // Lista mensajes para agentes (incluye tickets desactivados)
     export const listForAgent = fn(
         z.object({
             ticketId: z.string(),
@@ -184,9 +176,8 @@ export namespace Message {
         }
     );
 
-    /**
-     * Crea un mensaje y genera sugerencia con IA
-     */
+    
+    // Crea un mensaje y genera sugerencia con IA
     export const create = fn(
         CreateSchema,
         async (data) => {
@@ -293,9 +284,7 @@ export namespace Message {
         }
     );
 
-    /**
-     * Crea un mensaje del agente 
-     */
+     // Crea un mensaje del agente 
     export const createAgentMessage = fn(
         CreateSchema,
         async (data) => {

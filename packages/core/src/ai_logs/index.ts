@@ -62,9 +62,9 @@ export namespace AILog {
         };
     }
 
-    /**
-     * Lista todos los logs de IA de un ticket
-     */
+
+     // Lista todos los logs de IA de un ticket
+
     export const list = fn(
         z.object({
             ticketId: z.string(),

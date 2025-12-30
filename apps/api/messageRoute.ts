@@ -183,6 +183,7 @@ export const messageRoute = new Hono()
                 content: {
                     'application/json': {
                         schema: resolver(Message.CreateInputSchema),
+                        example: Examples.MessageForAgent,
                     },
                 } as any,
             },
@@ -194,7 +195,9 @@ export const messageRoute = new Hono()
                             schema: resolver(
                                 z.object({
                                     data: z.object({
-                                        message: z.string(),
+                                        message: z.string().openapi({
+                                            example: "Su respuesta ya ha sido enviada correctamente",
+                                        }),
                                     }),
                                 })
                             ),

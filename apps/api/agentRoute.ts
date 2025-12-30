@@ -13,7 +13,7 @@ export const agentTicketRoute = new Hono()
         describeRoute({
             tags: ['Agent Tickets'],
             summary: 'Listar todos los tickets',
-            description: 'Vista de agente para ver tickets de todos los usuarios. Opcionalmente incluye tickets eliminados.',
+            description: 'Vista de agente para ver tickets de todos los usuarios',
             responses: {
                 200: {
                     description: 'Lista global de tickets',
