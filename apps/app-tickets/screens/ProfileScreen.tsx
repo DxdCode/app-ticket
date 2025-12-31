@@ -46,7 +46,6 @@ export default function Profile({
 
     return (
         <ScrollView style={styles.container}>
-            <Text style={styles.profileTitle}>Mi Perfil</Text>
             {/* Avatar centrado */}
             <View style={styles.avatarSection}>
                 <View style={styles.avatar}>
@@ -179,13 +178,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#f8fafc",
-    },
-    profileTitle: {
-        marginTop: 24,
-        fontSize: 28,
-        fontWeight: "700",
-        color: "#000000",
-        textAlign: "center",
     },
     centerContainer: {
         flex: 1,
