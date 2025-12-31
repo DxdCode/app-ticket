@@ -28,7 +28,7 @@ export default function HomeScreen({ children }: HomeScreenProps) {
                             : "Invitado"}
                     </Text>
 
-                    <View style={styles.badge}>
+                    <View style={user?.role === Role.Agente ? styles.badgeAgent : styles.badge}>
                         <Text style={styles.badgeText}>
                             {ROLE_LABELS[user?.role || Role.User]}
                         </Text>
@@ -43,13 +43,12 @@ export default function HomeScreen({ children }: HomeScreenProps) {
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
         backgroundColor: "#f8fafc",
     },
     header: {
         width: "100%",
         paddingTop: 24,
-        paddingHorizontal: 24,
+        paddingHorizontal: 16,
     },
     headerContent: {
         flexDirection: "row",
@@ -57,9 +56,15 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     greetingText: {
-        fontSize: 28,
+        fontSize: 36,
         fontWeight: "700",
         color: "#000000",
+    },
+    badgeAgent: {
+        backgroundColor: "#10b981",
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 12,
     },
     badge: {
         backgroundColor: "#2978df",
