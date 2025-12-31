@@ -1,26 +1,35 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, DimensionValue } from "react-native";
 import { ReactNode } from "react";
 
-// Props para el componente Box
 interface Props {
     icon?: ReactNode;
-    value: string | number;
+    value?: string | number;
     status: string;
     iconBgColor?: string;
+    width?: DimensionValue;
 }
 
-// Componente Box para mostrar la información como el icono, valor, estado y color de fondo del icono
-export default function Box({ icon, value, status, iconBgColor = "#dbeafe" }: Props) {
+export default function Box({
+    icon,
+    value,
+    status,
+    iconBgColor = "#dbeafe",
+    width,
+}: Props) {
     return (
-        <View style={styles.container}>
-            {/* Icono */}
+        <View
+            style={[
+                styles.container,
+                width != null ? { width } : { flex: 1 },
+            ]}
+        >
             <View style={styles.header}>
                 <View style={[styles.iconWrapper, { backgroundColor: iconBgColor }]}>
                     {icon}
                 </View>
             </View>
-            {/* Valor y estado */}
-            <Text style={styles.value}>{value}</Text>
+
+            {value != null && <Text style={styles.value}>{value}</Text>}
             <Text style={styles.label}>{status}</Text>
         </View>
     );
@@ -40,8 +49,6 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
         elevation: 3,
         minWidth: 150,
-        flex: 1,
-        
     },
     header: {
         marginBottom: 16,
