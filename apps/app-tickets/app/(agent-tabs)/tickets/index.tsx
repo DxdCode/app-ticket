@@ -1,17 +1,27 @@
-import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useAgentTickets } from '@/hooks/useAgent';
 import CardTickets from '@/components/CardTickets';
 import { router } from 'expo-router';
 import useUser from '@/hooks/useUser';
 import { Ionicons } from '@expo/vector-icons';
-import TicketFilters, { FilterType } from '@/components/TicketFilters';
+import { Status, Priority, Categories } from '@/types/type-ticket';
+import FilterTickets from '@/components/TicketByFilter';
 
 export default function Tickets() {
-    const { getAgentTickets, tickets, loading, error } = useAgentTickets();
+    const {
+        getAgentTickets,
+        tickets,
+        loading,
+        error,
+    } = useAgentTickets();
+
     const { user } = useUser();
     const [refreshing, setRefreshing] = useState(false);
-    const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+
+    const [activeStatus, setActiveStatus] = useState<Status | 'all'>('all');
+    const [activePriority, setActivePriority] = useState<Priority | 'todas'>('todas');
+    const [activeCategory, setActiveCategory] = useState<Categories | 'todas'>('todas');
 
     useEffect(() => {
         getAgentTickets();
@@ -23,35 +33,77 @@ export default function Tickets() {
 
     const handleRefresh = async () => {
         setRefreshing(true);
+        setActiveStatus('all');
+        setActivePriority('todas');
+        setActiveCategory('todas');
         await getAgentTickets();
         setRefreshing(false);
-        setActiveFilter('all')
-
-    }
-
-    // Filtrar tickets según el filtro activo
-    const ticketsArray = tickets || [];
-
-    const getFilteredTickets = () => {
-        if (activeFilter === 'all') {
-            return ticketsArray;
-        }
-        return ticketsArray.filter(ticket => ticket.status === activeFilter);
     };
 
-    const filteredTickets = getFilteredTickets();
+    const handleStatusChange = async (status: Status | 'all') => {
+        setActiveStatus(status);
+        await applyFilters(status, activePriority, activeCategory);
+    };
 
-    // Contar tickets por estado
-    const ticketCounts = {
+    const handlePriorityChange = async (priority: Priority | 'todas') => {
+        setActivePriority(priority);
+        await applyFilters(activeStatus, priority, activeCategory);
+    };
+
+    const handleCategoryChange = async (category: Categories | 'todas') => {
+        setActiveCategory(category);
+        await applyFilters(activeStatus, activePriority, category);
+    };
+
+    const applyFilters = async (
+        status: Status | 'all',
+        priority: Priority | 'todas',
+        category: Categories | 'todas'
+    ) => {
+        const filters: any = {};
+        
+        if (status !== 'all') {
+            filters.status = status;
+        }
+        
+        if (priority !== 'todas') {
+            filters.priority = priority;
+        }
+        
+        if (category !== 'todas') {
+            filters.category = category;
+        }
+
+        await getAgentTickets(filters);
+    };
+
+    const ticketsArray = tickets || [];
+
+    const statusCounts = {
         all: ticketsArray.length,
         in_progress: ticketsArray.filter(t => t.status === 'in_progress').length,
         open: ticketsArray.filter(t => t.status === 'open').length,
         resolved: ticketsArray.filter(t => t.status === 'resolved').length,
     };
 
+    const priorityCounts = {
+        todas: ticketsArray.length,
+        alta: ticketsArray.filter(t => t.priority === 'alta').length,
+        media: ticketsArray.filter(t => t.priority === 'media').length,
+        baja: ticketsArray.filter(t => t.priority === 'baja').length,
+    };
+
+    const categoryCounts = {
+        todas: ticketsArray.length,
+        login: ticketsArray.filter(t => t.category === 'login').length,
+        pago: ticketsArray.filter(t => t.category === 'pago').length,
+        cuenta: ticketsArray.filter(t => t.category === 'cuenta').length,
+        tecnico: ticketsArray.filter(t => t.category === 'tecnico').length,
+        otro: ticketsArray.filter(t => t.category === 'otro').length,
+    };
+
     return (
         <View style={styles.container}>
-
             <View style={{ padding: 16, backgroundColor: '#ffffff' }}>
                 <Text style={styles.screenTitle}>Gestionar Tickets</Text>
 
@@ -59,32 +111,39 @@ export default function Tickets() {
                     <Text style={styles.errorText}>{error}</Text>
                 )}
 
-                <TicketFilters
-                    activeFilter={activeFilter}
-                    onFilterChange={setActiveFilter}
-                    ticketCounts={ticketCounts}
+                <FilterTickets
+                    activeStatus={activeStatus}
+                    activePriority={activePriority}
+                    activeCategory={activeCategory}
+                    onStatusChange={handleStatusChange}
+                    onPriorityChange={handlePriorityChange}
+                    onCategoryChange={handleCategoryChange}
+                    statusCounts={statusCounts}
+                    priorityCounts={priorityCounts}
+                    categoryCounts={categoryCounts}
                 />
             </View>
 
-            <View style={{ padding: 16 }}>
+            <View style={styles.listContainer}>
                 <View style={styles.header}>
                     <Text style={styles.subtitle}>Mis tickets</Text>
+
                     <TouchableOpacity
                         style={styles.refreshButton}
                         onPress={handleRefresh}
-                        disabled={refreshing}
+                        disabled={refreshing || loading}
                     >
                         <Ionicons
-                            name={refreshing ? "reload" : "refresh"}
+                            name={refreshing ? 'reload' : 'refresh'}
                             size={20}
                             color="#ffffff"
                         />
                         <Text style={styles.refreshText}>Actualizar</Text>
                     </TouchableOpacity>
                 </View>
-                {/* Lista de tickets filtrados */}
+
                 <FlatList
-                    data={filteredTickets}
+                    data={ticketsArray} 
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
                         <CardTickets
@@ -95,19 +154,19 @@ export default function Tickets() {
                     )}
                     refreshing={refreshing}
                     onRefresh={handleRefresh}
-                    showsVerticalScrollIndicator={false}
+                    showsVerticalScrollIndicator={Platform.OS === 'web'}
                     contentContainerStyle={styles.listContent}
+                    style={Platform.OS === 'web' ? styles.webList : undefined}
                     ListEmptyComponent={
                         !loading ? (
                             <View style={styles.emptyBox}>
-                                <Ionicons name="folder-open-outline" size={64} color="#cbd5e1" />
+                                <Ionicons
+                                    name="folder-open-outline"
+                                    size={64}
+                                    color="#cbd5e1"
+                                />
                                 <Text style={styles.emptyText}>
-                                    {activeFilter === 'all'
-                                        ? 'No hay tickets'
-                                        : `No hay tickets ${activeFilter === 'in_progress' ? 'en progreso' :
-                                            activeFilter === 'open' ? 'abiertos' : 'resueltos'
-                                        }`
-                                    }
+                                    No hay tickets
                                 </Text>
                             </View>
                         ) : null
@@ -115,7 +174,7 @@ export default function Tickets() {
                 />
             </View>
         </View>
-    )
+    );
 }
 
 const styles = StyleSheet.create({
@@ -138,14 +197,9 @@ const styles = StyleSheet.create({
     errorText: {
         color: '#ef4444',
         fontSize: 14,
-        marginBottom: 12,
-        paddingHorizontal: 8,
-        backgroundColor: '#fee2e2',
-        padding: 12,
-        borderRadius: 8,
     },
     screenTitle: {
-        fontSize: 36,
+        fontSize: 32,
         fontWeight: "700",
         color: "#000000",
         marginBottom: 14,
@@ -164,8 +218,16 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#ffffff',
     },
+    listContainer: {
+        flex: 1,
+        padding: 16,
+    },
     listContent: {
+        flexGrow: 1,
         paddingBottom: 16,
+    },
+    webList: {
+        flex: 1,
     },
     emptyBox: {
         justifyContent: 'center',

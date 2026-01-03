@@ -42,14 +42,32 @@ export namespace Examples {
         token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example",
     } as const;
 
+    export enum TicketStatus {
+        Open = "open",
+        InProgress = "in_progress",
+        Resolved = "resolved",
+    }
+    export enum TicketCategory {
+        Login = "login",
+        Pago = "pago",
+        Cuenta = "cuenta",
+        Tecnico = "tecnico",
+        Otro = "otro",
+    }
+
+    export enum TicketPriority {
+        Alta = "alta",
+        Media = "media",
+        Baja = "baja",
+    }
     export const TicketInfo = {
         id: Id("ticket"),
         userId: Id("user"),
         title: "Problema con facturación",
         description: "No se refleja el pago en mi cuenta",
-        category: "pago",
-        priority: "alta",
-        status: "open",
+        category: TicketCategory.Pago,
+        priority: TicketPriority.Alta,
+        status: TicketStatus.Open,
     } as const;
 
     export const Ticket = {
@@ -64,17 +82,17 @@ export namespace Examples {
         userId: Id("user"),
         title: "La pc ya no funciona",
         description: "Me sale que esta actualizando el windows",
-        category: "tecnico",
-        priority: "alta",
-        status: "resolved",
+        category: TicketCategory.Tecnico,
+        priority: TicketPriority.Alta,
+        status: TicketStatus.Resolved,
         userName: "stalin",
         userEmail: "stalin@gmail.com",
     } as const;
 
     export const TicketCreateOutput = {
         id: Id("ticket"),
-        category: "tecnico",
-        priority: "alta",
+        category: TicketCategory.Tecnico,
+        priority: TicketPriority.Alta,
     } as const;
 
     export const Message = {
@@ -103,8 +121,8 @@ export namespace Examples {
             description: "No se refleja el pago en mi cuenta",
         },
         output: {
-            categoria: "pago",
-            prioridad: "alta",
+            categoria: TicketCategory.Pago,
+            prioridad: TicketPriority.Alta,
         },
     };
 }

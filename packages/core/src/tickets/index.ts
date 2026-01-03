@@ -14,7 +14,12 @@ import { aiLogTable } from "../ai_logs/ai_log.sql";
 export namespace Ticket {
     // Enums y tipos
     export const StatusEnum = z.enum(["open", "in_progress", "resolved"]);
+    export const CategoryEnum = z.enum(["login", "pago", "cuenta", "tecnico", "otro"]);
+    export const PriorityEnum = z.enum(["alta", "media", "baja"]);
+    
     export type Status = z.infer<typeof StatusEnum>;
+    export type Category = z.infer<typeof CategoryEnum>;
+    export type Priority = z.infer<typeof PriorityEnum>;
 
     // Schemas principales
     export const InfoSchema = z.object({
@@ -34,25 +39,17 @@ export namespace Ticket {
             description: "Descripción del problema",
             example: Examples.TicketInfo.description,
         }),
-        category: z.string().openapi({
+        category: CategoryEnum.openapi({
             description: "Categoría del ticket",
             example: Examples.TicketInfo.category,
         }),
-        priority: z.string().openapi({
+        priority: PriorityEnum.openapi({
             description: "Prioridad del ticket",
             example: Examples.TicketInfo.priority,
         }),
         status: StatusEnum.openapi({
             description: "Estado del ticket",
-            example: "open",
-        }),
-        userName: z.string().optional().openapi({
-            description: "Nombre del usuario (solo para agentes)",
-            example: Examples.TicketForAgent.userName,
-        }),
-        userEmail: z.string().optional().openapi({
-            description: "Email del usuario (solo para agentes)",
-            example: Examples.TicketForAgent.userEmail,
+            example: Examples.TicketInfo.status,
         }),
     }).openapi({
         ref: "TicketResource",
@@ -85,6 +82,24 @@ export namespace Ticket {
 
     export type DetailType = z.infer<typeof DetailSchema>;
 
+    // Schema específico para vistas de agente
+    export const AgentTicketSchema = InfoSchema.extend({
+        userName: z.string().optional().openapi({
+            description: "Nombre del usuario que creó el ticket",
+            example: Examples.TicketForAgent.userName,
+        }),
+        userEmail: z.string().optional().openapi({
+            description: "Email del usuario que creó el ticket",
+            example: Examples.TicketForAgent.userEmail,
+        }),
+    }).openapi({
+        ref: "AgentTicketInfo",
+        description: "Información del ticket con datos del usuario (para agentes)",
+        example: Examples.TicketForAgent,
+    });
+
+    export type AgentTicketType = z.infer<typeof AgentTicketSchema>;
+
     // DTOs de entrada/salida
     export const CreateInputSchema = z.object({
         title: z.string().min(1).openapi({
@@ -107,11 +122,11 @@ export namespace Ticket {
             description: "ID del ticket creado",
             example: Examples.Ticket.id,
         }),
-        category: z.string().openapi({
+        category: CategoryEnum.openapi({
             description: "Categoría asignada por IA",
             example: Examples.Ticket.category,
         }),
-        priority: z.string().openapi({
+        priority: PriorityEnum.openapi({
             description: "Prioridad asignada por IA",
             example: Examples.Ticket.priority,
         }),
@@ -141,9 +156,9 @@ export namespace Ticket {
             userId: input.userId,
             title: input.title,
             description: input.description,
-            category: input.category,
-            priority: input.priority,
-            status: input.status,
+            category: input.category as Category,
+            priority: input.priority as Priority,
+            status: input.status as Status,
         };
     }
 
@@ -153,6 +168,18 @@ export namespace Ticket {
             isActive: input.isActive,
             timeCreated: input.timeCreated.toISOString(),
             timeUpdated: input.timeUpdated?.toISOString() ?? null,
+        };
+    }
+
+    // Serializer para vistas de agente
+    function serializeAgentTicket(
+        input: typeof ticketTable.$inferSelect,
+        user?: { username: string | null; email: string | null } | null
+    ): AgentTicketType {
+        return {
+            ...serialize(input),
+            userName: user?.username ?? undefined,
+            userEmail: user?.email ?? undefined,
         };
     }
 
@@ -190,8 +217,32 @@ export namespace Ticket {
 
     // Listar todos los tickets (para agentes) - incluye inactivos si se solicita
     export const listAll = fn(
-        z.object({ includeInactive: z.boolean().optional() }),
-        async ({ includeInactive = false }) => {
+        z.object({ 
+            includeInactive: z.boolean().optional(),
+            status: StatusEnum.optional(),
+            priority: PriorityEnum.optional(),
+            category: CategoryEnum.optional(),
+        }),
+        async ({ includeInactive = false, status, priority, category }) => {
+            
+            const conditions = [];
+            
+            if (!includeInactive) {
+                conditions.push(eq(ticketTable.isActive, true));
+            }
+            
+            if (status) {
+                conditions.push(eq(ticketTable.status, status));
+            }
+            
+            if (priority) {
+                conditions.push(eq(ticketTable.priority, priority));
+            }
+            
+            if (category) {
+                conditions.push(eq(ticketTable.category, category));
+            }
+
             const tickets = await Drizzle.db
                 .select({
                     ticket: ticketTable,
@@ -202,18 +253,12 @@ export namespace Ticket {
                 })
                 .from(ticketTable)
                 .leftJoin(userTable, eq(ticketTable.userId, userTable.id))
-                .where(includeInactive ? undefined : eq(ticketTable.isActive, true))
+                .where(conditions.length > 0 ? and(...conditions) : undefined)
                 .orderBy(desc(ticketTable.timeCreated));
 
-            if (tickets.length === 0) {
-                throw AppError.notFound("No se encontraron tickets", "no_tickets_found");
-            }
-
-            return tickets.map(({ ticket, user }) => ({
-                ...serialize(ticket),
-                userName: user?.username,
-                userEmail: user?.email,
-            }));
+            return tickets.map(({ ticket, user }) =>
+                serializeAgentTicket(ticket, user)
+            );
         }
     );
 
@@ -242,11 +287,15 @@ export namespace Ticket {
                 output: JSON.stringify(ai),
             });
 
-            return { id, category: ai.categoria, priority: ai.prioridad };
+            return { 
+                id, 
+                category: ai.categoria as Category, 
+                priority: ai.prioridad as Priority 
+            };
         }
     );
 
-    // Actualizar el estado del ticket (para agentes)
+    // Actualizar el estado del ticket 
     export const update = fn(
         InfoSchema.pick({ id: true }).extend({
             status: StatusEnum.optional(),

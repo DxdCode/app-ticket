@@ -1,8 +1,9 @@
-// Tipos de prioridad
-export type Priority = "alta" | "media" | "baja";
 
-// Tipos de estado
+// Tipos 
+
+export type Priority = "alta" | "media" | "baja";
 export type Status = "open" | "in_progress" | "resolved";
+export type Categories = "login" | "pago" | "cuenta" | "tecnico" | "otro";
 
 // Interface principal de ticket
 export interface TicketsProps {
@@ -21,6 +22,7 @@ export interface TicketsProps {
 export interface TicketResponse extends TicketsProps {
     userName?: string;
     userEmail?: string;
+    category?: Categories;
 }
 
 // Respuesta de API para el detalle completo del ticket
