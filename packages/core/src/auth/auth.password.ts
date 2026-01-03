@@ -1,12 +1,12 @@
+import bcrypt from "bcryptjs";
+
 export namespace Password {
     export async function hash(plainPassword: string): Promise<string> {
-        return await Bun.password.hash(plainPassword, {
-            algorithm: "bcrypt",
-            cost: 10,
-        });
+        const saltRounds = 10;
+        return await bcrypt.hash(plainPassword, saltRounds);
     }
 
     export async function verify(plainPassword: string, hashedPassword: string): Promise<boolean> {
-        return await Bun.password.verify(plainPassword, hashedPassword);
+        return await bcrypt.compare(plainPassword, hashedPassword);
     }
 }

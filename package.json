@@ -6,12 +6,26 @@
     "apps/*",
     "packages/*"
   ],
+  "scripts": {
+    "dev": "sst --stage staging dev",
+    "dev:api": "bun --cwd apps/api dev",
+    "dev:web": "bun --cwd apps/app-tickets expo start --web",
+    "build": "bun --cwd apps/app-tickets expo export --platform web",
+    "deploy": "bun run build && sst --stage staging deploy",
+    "deploy:api": "sst --stage staging deploy --target api",
+    "deploy:web": "bun run build && sst --stage staging deploy --target web"
+  },
   "devDependencies": {
+    "@types/aws-lambda": "8.10.145",
     "@types/bun": "latest"
   },
   "peerDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "~5.9.2"
   },
   "dependencies": {
-  }
+    "aws-cdk-lib": "^2.233.0",
+    "constructs": "^10.4.4",
+    "sst": "^3.17.25"
+  },
+  "private": true
 }
