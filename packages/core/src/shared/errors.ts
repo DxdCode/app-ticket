@@ -46,4 +46,7 @@ export class AppError extends Error {
     static forbidden(message: string, code: string = "forbidden") {
         return new AppError("forbidden", code, message, undefined, undefined, 403);
     }
+    static internal(message: string, code: string = "internal_error", details?: any) {
+        return new AppError("internal", code, message, undefined, details, 500);
+    }
 }

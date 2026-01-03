@@ -235,7 +235,7 @@ export namespace Message {
                     sender: m.senderId,
                     message: m.message,
                 }))
-            );
+            ); 
 
             const suggestion = await IA.assistTicket({
                 titulo: ticket.title,
