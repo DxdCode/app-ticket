@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     greetingText: {
-        fontSize: 36,
+        fontSize: 32,
         fontWeight: "700",
         color: "#000000",
     },

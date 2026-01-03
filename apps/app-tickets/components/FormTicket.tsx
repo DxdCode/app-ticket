@@ -23,7 +23,7 @@ export default function FormTicket({ onClose, onCreated }: FormTicketProps) {
     } = useTickets(() => {
         onCreated?.();
         onClose?.();
-    });
+    }, { autoLoad: false });
 
     const handleClose = () => {
         resetForm();

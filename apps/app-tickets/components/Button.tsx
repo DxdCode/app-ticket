@@ -96,6 +96,7 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
+    letterSpacing: .1,
   },
   buttonTextCancel: {
     color: "#64748b",

@@ -231,6 +231,7 @@ const styles = StyleSheet.create({
         paddingLeft: 4,
         textTransform: "uppercase",
         letterSpacing: 1,
+        marginTop: 8,
     },
     card: {
         backgroundColor: "#ffffff",
@@ -274,7 +275,7 @@ const styles = StyleSheet.create({
     },
     value: {
         fontSize: 15,
-        fontWeight: "600",
+        fontWeight: "400",
         color: "#1e293b",
     },
 

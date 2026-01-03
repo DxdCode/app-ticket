@@ -4,7 +4,7 @@ import { parseApiError } from "@/utils/parseApiError";
 import { TicketResponse, TicketDetailResponse } from "@/types/type-ticket";
 import { ApiErrorResponse } from "@/types/api-error";
 
-export function useTickets(onSuccess?: () => void) {
+export function useTickets(onSuccess?: () => void, options?: { autoLoad?: boolean }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [tickets, setTickets] = useState<TicketResponse[]>([]);
@@ -39,7 +39,8 @@ export function useTickets(onSuccess?: () => void) {
 
     // Cargar tickets al montar
     useEffect(() => {
-        getTickets();
+        const autoLoad = options?.autoLoad ?? true;
+        if (autoLoad) getTickets();
     }, []);
 
     // Obtener ticket por ID

@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { useRouter } from "expo-router";
@@ -103,7 +103,7 @@ export default function Tickets() {
 
                 />
             </View>
-            <View style={{ padding: 16 }}>
+            <View style={styles.listContainer}>
                 <View style={styles.header}>
                     <Text style={styles.subtitle}>Mis tickets</Text>
                     <TouchableOpacity
@@ -132,10 +132,13 @@ export default function Tickets() {
                             onClose={handleClose}
                         />
                     )}
-                    showsVerticalScrollIndicator={false}
+                    showsVerticalScrollIndicator={Platform.OS === 'web'}
+                    contentContainerStyle={styles.listContent}
+                    style={Platform.OS === 'web' ? styles.webList : undefined}
                     ListEmptyComponent={
                         !loading ? (
                             <View style={styles.emptyBox}>
+                                <Ionicons name="folder-open-outline" size={64} color="#535353ff" />
                                 <Text style={styles.emptyText}>No hay tickets</Text>
                             </View>
                         ) : null
@@ -197,7 +200,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#f8fafc',
     },
     screenTitle: {
-        fontSize: 36,
+        fontSize: 32,
         fontWeight: "700",
         color: "#1a1d29",
         marginBottom: 14,
@@ -243,8 +246,19 @@ const styles = StyleSheet.create({
         paddingVertical: 40,
     },
     emptyText: {
-        color: '#64748b',
+        color: '#535353ff',
         fontSize: 16,
+    },
+    listContainer: {
+        flex: 1,
+        padding: 16,
+    },
+    listContent: {
+        flexGrow: 1,
+        paddingBottom: 80,
+    },
+    webList: {
+        flex: 1,
     },
     floatingActionButton: {
         position: "absolute",
